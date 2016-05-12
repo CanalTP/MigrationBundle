@@ -15,6 +15,8 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Migrations\Migration;
 use Doctrine\DBAL\Migrations\Configuration\Configuration;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 
 /**
  * Class responsible for executing bundle migrations.
@@ -29,16 +31,19 @@ class Migrator
     const DIRECTION_DOWN = 'down';
 
     private $connection;
+    private $container;
     private $cacheConfigs = array();
 
     /**
      * Constructor.
      *
-     * @param \Doctrine\DBAL\Connection $connection
+     * @param \Doctrine\DBAL\Connection                                 $connection
+     * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
      */
-    public function __construct(Connection $connection)
+    public function __construct(Connection $connection, ContainerInterface $container)
     {
         $this->connection = $connection;
+        $this->container = $container;
     }
 
     /**
@@ -149,6 +154,24 @@ class Migrator
 
         $this->cacheConfigs[$bundle->getName()] = $config;
 
+        $this->injectContainerToMigrations($this->container, $config->getMigrations());
+
         return $config;
+    }
+
+    /**
+     * @param ContainerInterface $container
+     * @param array $versions
+     *
+     * Injects the container to migrations aware of it
+     */
+    private function injectContainerToMigrations(ContainerInterface $container, array $versions)
+    {
+        foreach ($versions as $version) {
+            $migration = $version->getMigration();
+            if ($migration instanceof ContainerAwareInterface) {
+                $migration->setContainer($container);
+            }
+        }
     }
 }
