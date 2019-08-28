@@ -29,6 +29,7 @@
         </service>
         <service id="claroline.migration.migrator" class="%claroline.migration_migrator.class%">
             <argument type="service" id="doctrine.dbal.default_connection" />
+            <argument type="service" id="service_container" />
         </service>
         <service id="claroline.migration.doctrine_schema_tool" class="%claroline.migration_schema_tool.class%">
             <argument type="service" id="doctrine.orm.entity_manager" />
